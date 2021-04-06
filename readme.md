@@ -45,7 +45,7 @@ class Brand(models.Model):
 - python manage.py migrate
   - if you get any error, delete urls row from **projectname** folder
 - add serialize file into **apiname**
-  ```
+ ```
 from rest_framework import serializers
 from productapi.models import  Brand
 class BrandSerializer(serializers.Serializer):
@@ -54,19 +54,19 @@ class BrandSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return Brand.objects.create(**validated_data)
-  ```
+ ```
 - change to urls.py that in **apiname**
-  ```
+ ```
 from django.urls import path
 from productapi.views import  BrandList, ProductList
 urlpatterns = [
     path('brands/', BrandList.as_view()),
     path('products/', ProductList.as_view()),
 ]
-  ```
+ ```
 
 - last step for basic start rest_framework. You need to add below code into views for you hive any response to enduser.
-  ```
+ ```
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -74,8 +74,8 @@ from productapi.models import Brand
 from productapi.serializers import BrandSerializer
 class BrandList(APIView):
     def get(self, request, format=None):
-        libraries = Brand.objects.all()
-        serializer = BrandSerializer(libraries, many=True)
+        brands = Brand.objects.all()
+        serializer = BrandSerializer(brands, many=True)
         return Response(serializer.data)
     def post(self, request, format=None):
         serializer = BrandSerializer(data=request.data)
@@ -83,24 +83,24 @@ class BrandList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-  ```
+ ```
 
 - open 
   - https://rest.misaliperver.repl.co/api/brands/
-  ```
+ ```
     {
       "name":"LCwaikiki"
     }
-  ```
+ ```
   - https://rest.misaliperver.repl.co/api/products/
-  ```
+ ```
     {
       "title": "Et kesme bıçağı",
       "price": 129.99,
       "imgSrc": "https://........."
 
     }
-  ```
+ ```
 
 
 
@@ -123,3 +123,21 @@ class BrandSerializer(serializers.ModelSerializer):
         fields = ('id','name')
         #fields = '__all__'
 ```
+
+# Change Views with Mixin
+```
+from rest_framework import mixins, generics
+class BrandList(mixins.ListModelMixin,
+                  mixins.CreateModelMixin,
+                  generics.GenericAPIView):
+
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+```
+![alt text](docs/mixin.PNG "Mixin Ekran Görüntüsü")
